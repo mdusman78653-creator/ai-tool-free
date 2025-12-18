@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Free AI Chat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>Free AI Chat</h1>
+      <p>Backend: Hugging Face / Ollama / Colab</p>
+    </header>
+
+    <main id="chat">
+      <div id="messages"></div>
+    </main>
+
+    <footer>
+      <form id="chat-form">
+        <input id="user-input" type="text" placeholder="Type your message..." autocomplete="off" />
+        <select id="backend">
+          <option value="ollama">Ollama (local)</option>
+          <option value="hf_local">Hugging Face (local)</option>
+          <option value="hf_api">Hugging Face Inference API</option>
+        </select>
+        <button type="submit">Send</button>
+      </form>
+      <div class="tip">
+        <label>
+          HF Model:
+          <input id="hf-model" type="text" value="mistralai/Mistral-7B-Instruct" />
+        </label>
+        <label>
+          HF API Token:
+          <input id="hf-token" type="password" placeholder="Optional for hf_api" />
+        </label>
+        <label>
+          Ollama Model:
+          <input id="ollama-model" type="text" value="llama3.2" />
+        </label>
+      </div>
+    </footer>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

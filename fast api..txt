@@ -1,0 +1,41 @@
+from fastapi import FastAPI
+from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+
+from adapters import hf_inference_api, hf_local_generate, ollama_chat
+
+app = FastAPI()
+
+# Allow local frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], allow_credentials=True,
+    allow_methods=["*"], allow_headers=["*"],
+)
+
+class ChatRequest(BaseModel):
+    text: str
+    backend: str = "ollama"   # "ollama" | "hf_local" | "hf_api"
+    hf_model: str = "mistralai/Mistral-7B-Instruct"
+    hf_token: str = ""
+    ollama_model: str = "llama3.2"
+
+@app.post("/api/chat")
+def chat(req: ChatRequest):
+    prompt = req.text.strip()
+    if not prompt:
+        return {"reply": "Please provide input text."}
+
+    try:
+        if req.backend == "ollama":
+            reply = ollama_chat(prompt, req.ollama_model)
+        elif req.backend == "hf_local":
+            reply = hf_local_generate(prompt, req.hf_model)
+        elif req.backend == "hf_api":
+            reply = hf_inference_api(prompt, req.hf_model, req.hf_token)
+        else:
+            reply = "Unknown backend. Use ollama | hf_local | hf_api."
+    except Exception as e:
+        reply = f"Error: {e}"
+
+    return {"reply": reply}

@@ -1,0 +1,45 @@
+import os
+import requests
+from typing import List, Dict
+
+# ---------- Hugging Face Inference API ----------
+def hf_inference_api(prompt: str, model: str, hf_token: str) -> str:
+    if not hf_token:
+        return "Set HF API token or switch backend to hf_local/ollama."
+    url = f"https://api-inference.huggingface.co/models/{model}"
+    headers = {"Authorization": f"Bearer {hf_token}"}
+    payload = {"inputs": prompt, "parameters": {"max_new_tokens": 128}}
+    r = requests.post(url, headers=headers, json=payload, timeout=60)
+    r.raise_for_status()
+    data = r.json()
+    # Handle text-generation style responses
+    if isinstance(data, list) and data and "generated_text" in data[0]:
+        return data[0]["generated_text"]
+    # Some models return different shapes
+    return str(data)
+
+# ---------- Local Transformers (HF) ----------
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+
+_LOCAL_PIPELINES: Dict[str, any] = {}
+
+def hf_local_generate(prompt: str, model_name: str) -> str:
+    if model_name not in _LOCAL_PIPELINES:
+        tok = AutoTokenizer.from_pretrained(model_name)
+        mdl = AutoModelForCausalLM.from_pretrained(model_name)
+        _LOCAL_PIPELINES[model_name] = pipeline(
+            "text-generation", model=mdl, tokenizer=tok, device_map="auto"
+        )
+    generator = _LOCAL_PIPELINES[model_name]
+    out = generator(prompt, max_new_tokens=128, do_sample=True, temperature=0.8)
+    return out[0]["generated_text"]
+
+# ---------- Ollama ----------
+def ollama_chat(prompt: str, model: str = "llama3.2") -> str:
+    # Requires Ollama running locally: https://ollama.com
+    url = "http://127.0.0.1:11434/api/generate"
+    payload = {"model": model, "prompt": prompt, "stream": False}
+    r = requests.post(url, json=payload, timeout=60)
+    r.raise_for_status()
+    data = r.json()
+    return data.get("response", "")

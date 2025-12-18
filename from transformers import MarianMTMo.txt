@@ -1,0 +1,18 @@
+from transformers import MarianMTModel, MarianTokenizer
+
+_translators = {}
+
+def translate(text: str, direction: str = "en-te"):
+    model_map = {
+        "en-te": "Helsinki-NLP/opus-mt-en-te",
+        "te-en": "Helsinki-NLP/opus-mt-te-en",
+    }
+    m = model_map[direction]
+    if m not in _translators:
+        tok = MarianTokenizer.from_pretrained(m)
+        mdl = MarianMTModel.from_pretrained(m)
+        _translators[m] = (tok, mdl)
+    tok, mdl = _translators[m]
+    inputs = tok(text, return_tensors="pt", padding=True)
+    outputs = mdl.generate(**inputs, max_new_tokens=128)
+    return tok.decode(outputs[0], skip_special_tokens=True)

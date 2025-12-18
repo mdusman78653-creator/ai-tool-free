@@ -1,0 +1,19 @@
+import streamlit as st
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+
+st.set_page_config(page_title="Free AI Chat", layout="centered")
+st.title("Free AI Chat (Hugging Face Spaces)")
+
+model_name = st.text_input("HF model", "TinyLlama/TinyLlama-1.1B-Chat-v1.0")
+if "pipe" not in st.session_state or st.session_state.get("loaded_model") != model_name:
+    with st.spinner("Loading model..."):
+        tok = AutoTokenizer.from_pretrained(model_name)
+        mdl = AutoModelForCausalLM.from_pretrained(model_name)
+        st.session_state.pipe = pipeline("text-generation", model=mdl, tokenizer=tok, device_map="auto")
+        st.session_state.loaded_model = model_name
+
+prompt = st.text_area("Your message", "Hello!")
+if st.button("Generate"):
+    with st.spinner("Thinking..."):
+        out = st.session_state.pipe(prompt, max_new_tokens=128, do_sample=True, temperature=0.8)
+    st.write(out[0]["generated_text"])

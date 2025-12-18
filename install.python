@@ -1,0 +1,18 @@
+# Install
+!pip -q install transformers torch sentencepiece accelerate gradio
+
+import gradio as gr
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+
+MODEL = "TinyLlama/TinyLlama-1.1B-Chat-v1.0"
+
+tok = AutoTokenizer.from_pretrained(MODEL)
+mdl = AutoModelForCausalLM.from_pretrained(MODEL)
+pipe = pipeline("text-generation", model=mdl, tokenizer=tok, device_map="auto")
+
+def chat_fn(prompt):
+    out = pipe(prompt, max_new_tokens=128, do_sample=True, temperature=0.8)
+    return out[0]["generated_text"]
+
+demo = gr.Interface(fn=chat_fn, inputs="text", outputs="text", title="Free AI Chat (HF Local)")
+demo.launch(share=True)
